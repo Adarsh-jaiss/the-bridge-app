@@ -63,15 +63,15 @@ export default function Onboarding() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-surface relative">
+    <SafeAreaView className="flex-1 bg-surface dark:bg-slate-950 relative">
       {/* Decorative Subtle Background Grain/Tones */}
-      <View className="absolute top-[10%] -left-[20%] w-[60%] h-[40%] rounded-full bg-primary-fixed-dim opacity-20 blur-3xl pointer-events-none" />
-      <View className="absolute bottom-[10%] -right-[20%] w-[60%] h-[40%] rounded-full bg-secondary-fixed-dim opacity-20 blur-3xl pointer-events-none" />
+      <View className="absolute top-[10%] -left-[20%] w-[60%] h-[40%] rounded-full bg-primary-fixed-dim opacity-20 dark:opacity-5 blur-3xl pointer-events-none" />
+      <View className="absolute bottom-[10%] -right-[20%] w-[60%] h-[40%] rounded-full bg-secondary-fixed-dim opacity-20 dark:opacity-5 blur-3xl pointer-events-none" />
 
       {/* Header Actions: Skip */}
       <View className="w-full flex-row justify-end px-8 py-4 z-50">
         <Pressable onPress={handleSkip}>
-          <Text className="text-on-surface-variant font-medium text-sm">Skip</Text>
+          <Text className="text-on-surface-variant dark:text-slate-400 font-medium text-sm">Skip</Text>
         </Pressable>
       </View>
 
@@ -89,21 +89,21 @@ export default function Onboarding() {
           <View key={slide.key} style={{ width: SCREEN_WIDTH }} className="flex-1 items-center justify-center mt-[-100px]">
             {/* Abstract Nautical Illustration */}
             <View className="relative w-64 h-64 flex items-center justify-center mb-10">
-              <View className="absolute inset-0 bg-surface-container-low rounded-xl scale-95 opacity-50" />
-              <View className="relative z-10 p-12 bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10">
+              <View className="absolute inset-0 bg-surface-container-low dark:bg-slate-900 rounded-xl scale-95 opacity-50 dark:opacity-100" />
+              <View className="relative z-10 p-12 bg-surface-container-lowest dark:bg-slate-900 rounded-xl shadow-sm border border-outline-variant/10 dark:border-slate-800">
                 <MaterialIcons name={slide.icon as any} size={100} color="rgba(0, 80, 203, 0.4)" />
                 {/* Decorative Minimal Elements */}
-                <View className="absolute -top-4 -right-4 w-12 h-12 border-t-2 border-r-2 border-primary/10 rounded-tr-lg" />
-                <View className="absolute -bottom-4 -left-4 w-12 h-12 border-b-2 border-l-2 border-primary/10 rounded-bl-lg" />
+                <View className="absolute -top-4 -right-4 w-12 h-12 border-t-2 border-r-2 border-primary/10 dark:border-primary/20 rounded-tr-lg" />
+                <View className="absolute -bottom-4 -left-4 w-12 h-12 border-b-2 border-l-2 border-primary/10 dark:border-primary/20 rounded-bl-lg" />
               </View>
             </View>
 
             {/* Typography Content */}
             <View className="px-8 items-center">
-              <Text className="text-[28px] font-extrabold tracking-tight text-on-surface text-center leading-tight mb-4">
+              <Text className="text-[28px] font-extrabold tracking-tight text-on-surface dark:text-slate-50 text-center leading-tight mb-4">
                 {slide.title}
               </Text>
-              <Text className="text-[15px] leading-relaxed text-on-surface-variant text-center max-w-[380px]">
+              <Text className="text-[15px] leading-relaxed text-on-surface-variant dark:text-slate-400 text-center max-w-[380px]">
                 {slide.description}
               </Text>
             </View>
@@ -119,15 +119,15 @@ export default function Onboarding() {
             <View
               key={index}
               className={`h-1.5 rounded-full mr-2 ${
-                currentIndex === index ? "w-6 bg-primary" : "w-1.5 bg-surface-container-highest"
+                currentIndex === index ? "w-6 bg-primary dark:bg-primary" : "w-1.5 bg-surface-container-highest dark:bg-slate-800"
               }`}
             />
           ))}
         </View>
 
         {/* Primary Action Button */}
-        <Pressable onPress={handleNext} className="w-full h-14 bg-primary-container rounded-full shadow-sm flex-row items-center justify-center active:opacity-80">
-          <Text className="text-on-primary-container font-bold text-base mr-2">
+        <Pressable onPress={handleNext} className="w-full h-14 bg-primary-container dark:bg-primary rounded-full shadow-sm flex-row items-center justify-center active:opacity-80">
+          <Text className="text-on-primary-container dark:text-white font-bold text-base mr-2">
             {currentIndex === SLIDES.length - 1 ? "Get Started" : "Next"}
           </Text>
           <MaterialIcons name={currentIndex === SLIDES.length - 1 ? "check" : "arrow-forward"} size={20} color="#f8f7ff" />
