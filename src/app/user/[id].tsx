@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, Image, Pressable, FlatList, ActivityIndicator, LayoutAnimation, Platform, UIManager } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
 import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
-import { getUserProfile, UserProfileData, followUser, unfollowUser } from "../../lib/api/user";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, Image, LayoutAnimation, Platform, Pressable, Text, UIManager, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { ProfilePostCard, ProfilePostProps } from "../../components/profile/ProfilePostCard";
+import { followUser, getUserProfile, unfollowUser, UserProfileData } from "../../lib/api/user";
 import { getFallbackAvatarUrl } from "../../lib/avatar-fallback";
 
 function ProfileHeader({ 

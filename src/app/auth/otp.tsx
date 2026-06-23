@@ -1,10 +1,10 @@
-import { useState, useRef } from "react";
-import { Text, View, Pressable, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter, useLocalSearchParams } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
-import { verifyOTP, requestOTP } from "../../lib/api/auth";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import { useRef, useState } from "react";
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { requestOTP, verifyOTP } from "../../lib/api/auth";
 
 const OTP_LENGTH = 6;
 

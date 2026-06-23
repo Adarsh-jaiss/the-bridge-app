@@ -1,9 +1,9 @@
 import { MaterialIcons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import * as DocumentPicker from "expo-document-picker";
 import { registerUserOnboarding } from "../../lib/api/user";
 
 const TOTAL_STEPS = 3;
