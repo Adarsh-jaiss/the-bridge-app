@@ -1,4 +1,4 @@
-import { apiClient, ApiResponse } from "./client";
+import { apiFetch, ApiResponse } from "./client";
 
 // Define the specific shapes of the `data` objects returned by these endpoints
 interface RequestOTPData {
@@ -8,15 +8,19 @@ interface RequestOTPData {
 interface VerifyOTPData {
     access_token: string;
     refresh_token: string;
+    is_verified?: boolean;
 }
 
 export const requestOTP = async (email: string): Promise<ApiResponse<RequestOTPData>> => {
-    // Using the generic wrapper to type the response properly
-    const response = await apiClient.post<ApiResponse<RequestOTPData>>("/v1/auth/trigger-otp", { email });
-    return response.data;
+    return apiFetch<ApiResponse<RequestOTPData>>("/v1/auth/trigger-otp", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+    });
 };
 
 export const verifyOTP = async (email: string, otp: string): Promise<ApiResponse<VerifyOTPData>> => {
-    const response = await apiClient.post<ApiResponse<VerifyOTPData>>("/v1/auth/verify-otp", { email, otp });
-    return response.data;
+    return apiFetch<ApiResponse<VerifyOTPData>>("/v1/auth/verify-otp", {
+        method: "POST",
+        body: JSON.stringify({ email, otp }),
+    });
 };

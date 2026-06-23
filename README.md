@@ -54,3 +54,9 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+
+
+Now i want you to check the design of the feed and create the all the compoents one by one and set them up. and then later we will add api's for now you can create some posts in dummy data folder as json.
+
+But first i want you to start with just UI part like the navigation panel below using which users can switch to different screens, and then the top bar which will have a search bar instead of 3 options like global feed, my feed and etc options and make sure to keep it as home and default page where login user lands up.
