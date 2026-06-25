@@ -286,21 +286,11 @@ export default function ProfileScreen() {
   const handleTabRefresh = async () => {
     setIsPullRefreshing(true);
     try {
-      if (activeTab === "bookmarks") {
-        await Promise.all([
-          refetch({ throwOnError: false, cancelRefetch: false }),
-          bookmarksQuery.refetch({ throwOnError: false, cancelRefetch: false }),
-        ]);
-        return;
-      }
-      if (activeTab === "reposts") {
-        await Promise.all([
-          refetch({ throwOnError: false, cancelRefetch: false }),
-          repostsQuery.refetch({ throwOnError: false, cancelRefetch: false }),
-        ]);
-        return;
-      }
-      await refetch({ throwOnError: false, cancelRefetch: false });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["myProfile"] }),
+        queryClient.invalidateQueries({ queryKey: ["myRepostedPosts"] }),
+        queryClient.invalidateQueries({ queryKey: ["myBookmarkedPosts"] }),
+      ]);
     } finally {
       setIsPullRefreshing(false);
     }
@@ -435,12 +425,16 @@ export default function ProfileScreen() {
                 showDeleteAction
                 showReportAction={false}
                 onPostStateChange={() => {
-                  refetch();
-                  repostsQuery.refetch();
-                  bookmarksQuery.refetch();
+                  queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+                  queryClient.invalidateQueries({ queryKey: ["myRepostedPosts"] });
+                  queryClient.invalidateQueries({ queryKey: ["myBookmarkedPosts"] });
+                  queryClient.invalidateQueries({ queryKey: ["feed"] });
                 }}
                 onDeleteSuccess={() => {
-                  refetch();
+                  queryClient.invalidateQueries({ queryKey: ["myProfile"] });
+                  queryClient.invalidateQueries({ queryKey: ["myRepostedPosts"] });
+                  queryClient.invalidateQueries({ queryKey: ["myBookmarkedPosts"] });
+                  queryClient.invalidateQueries({ queryKey: ["feed"] });
                 }}
               />
             );

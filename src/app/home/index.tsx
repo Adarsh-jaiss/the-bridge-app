@@ -94,7 +94,10 @@ export default function Feed() {
   const handlePullToRefresh = useCallback(async () => {
     setIsPullRefreshing(true);
     try {
-      await refetch({ throwOnError: false, cancelRefetch: false });
+      await Promise.all([
+        refetch({ throwOnError: false, cancelRefetch: false }),
+        queryClient.invalidateQueries({ queryKey: ["unreadNotificationsCount"] })
+      ]);
     } finally {
       setIsPullRefreshing(false);
     }

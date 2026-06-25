@@ -2,8 +2,8 @@ import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 import { QueryClient } from "@tanstack/react-query";
 
-const BASE_URL = "http://10.106.151.78:8080/api"; // Updated from localhost for physical device testing
-
+// const BASE_URL = "http://10.106.151.78:8080/api";
+const BASE_URL = ""
 export const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
