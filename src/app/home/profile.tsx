@@ -2,12 +2,14 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, Image, LayoutAnimation, Platform, Pressable, Text, UIManager, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Image, LayoutAnimation, Modal, Platform, Pressable, Text, UIManager, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ProfilePostCard, ProfilePostProps } from "../../components/profile/ProfilePostCard";
 import { getBookmarkedPosts, getRepostedPosts } from "../../lib/api/posts";
 import { getMyProfile, UserProfileData } from "../../lib/api/user";
 import { getFallbackAvatarUrl } from "../../lib/avatar-fallback";
+import * as SecureStore from "expo-secure-store";
+import { queryClient } from "../../lib/api/client";
 
 const PROFILE_POSTS_PAGE_SIZE = 15;
 
@@ -150,6 +152,7 @@ export default function ProfileScreen() {
   const [activeTab, setActiveTab] = useState<"posts" | "reposts" | "bookmarks">("posts");
   const [isPullRefreshing, setIsPullRefreshing] = useState(false);
   const [swipeStartPoint, setSwipeStartPoint] = useState<{ x: number; y: number } | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const profileTabsOrder: Array<"posts" | "reposts" | "bookmarks"> = ["posts", "reposts", "bookmarks"];
   useEffect(() => {
     if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -367,12 +370,20 @@ export default function ProfileScreen() {
             The Bridge
           </Text>
         </View>
-        <Pressable
-          className="p-2 rounded-full active:bg-surface-container-low transition-colors"
-          onPress={() => router.push("../profile/account-center")}
-        >
-          <MaterialIcons name="settings" size={24} color="#1a1c1c" className="" />
-        </Pressable>
+        <View className="flex-row items-center gap-2">
+          <Pressable
+            className="p-2 rounded-full active:bg-surface-container-low transition-colors"
+            onPress={() => router.push("/profile/edit")}
+          >
+            <MaterialIcons name="edit" size={24} color="#1a1c1c" />
+          </Pressable>
+          <Pressable
+            className="p-2 rounded-full active:bg-surface-container-low transition-colors"
+            onPress={() => setIsSettingsOpen(true)}
+          >
+            <MaterialIcons name="settings" size={24} color="#1a1c1c" />
+          </Pressable>
+        </View>
       </View>
 
       {isLoading && !profile ? (
@@ -465,6 +476,46 @@ export default function ProfileScreen() {
           }
         />
       )}
+
+      <Modal
+        visible={isSettingsOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsSettingsOpen(false)}
+      >
+        <Pressable className="flex-1 bg-black/40 justify-end" onPress={() => setIsSettingsOpen(false)}>
+          <View className="bg-surface rounded-t-3xl p-5 border-t border-surface-container-high">
+            <Pressable
+              className="flex-row items-center gap-3 px-2 py-3 active:opacity-70"
+              onPress={() => {
+                setIsSettingsOpen(false);
+                Alert.alert("Logout", "Are you sure you want to logout?", [
+                  { text: "Cancel", style: "cancel" },
+                  {
+                    text: "Logout",
+                    style: "destructive",
+                    onPress: async () => {
+                      await SecureStore.deleteItemAsync("access_token");
+                      await SecureStore.deleteItemAsync("refresh_token");
+                      await queryClient.clear();
+                      router.replace("/auth/login");
+                    },
+                  },
+                ]);
+              }}
+            >
+              <MaterialIcons name="logout" size={22} color="#ba1a1a" />
+              <Text className="text-base font-semibold text-error">Logout</Text>
+            </Pressable>
+            <Pressable
+              className="mt-2 py-3 rounded-full bg-surface-container-high items-center"
+              onPress={() => setIsSettingsOpen(false)}
+            >
+              <Text className="font-semibold text-on-surface">Cancel</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }

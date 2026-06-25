@@ -1,15 +1,16 @@
+import { useMutation } from "@tanstack/react-query";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, Ellipsis, Trash2 } from "lucide-react-native";
 import { cssInterop } from "nativewind";
 import React, { useMemo, useState } from "react";
-import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, KeyboardAvoidingView, Modal, Platform, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CommentComposer, MentionCandidate } from "../../components/comments/CommentComposer";
 import { MentionText } from "../../components/common/MentionText";
 import { TransientSnackbar } from "../../components/common/TransientSnackbar";
 import { queryClient } from "../../lib/api/client";
-import { PostComment, getCommentReplies } from "../../lib/api/posts";
+import { PostComment, deleteComment, getCommentReplies } from "../../lib/api/posts";
 import { getFallbackAvatarUrl } from "../../lib/avatar-fallback";
 
 cssInterop(Image, { className: "style" });
@@ -28,10 +29,14 @@ const displayName = (c: Pick<PostComment, "first_name" | "last_name">) =>
 
 function ReplyItem({
   reply,
+  postId,
   onPressUser,
+  onDeleteSuccess,
 }: {
   reply: PostComment;
+  postId: number;
   onPressUser: (comment: PostComment) => void;
+  onDeleteSuccess?: (commentId: number) => void;
 }) {
   const fallbackAvatar = getFallbackAvatarUrl(reply.public_id || String(reply.id));
   const relativeTime = (() => {
@@ -41,6 +46,17 @@ function ReplyItem({
     if (diffMin < 1440) return `${Math.floor(diffMin / 60)}h`;
     return `${Math.floor(diffMin / 1440)}d`;
   })();
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await deleteComment(postId, reply.id);
+    },
+    onSuccess: () => {
+      setIsMenuOpen(false);
+      onDeleteSuccess?.(reply.id);
+    },
+  });
 
   return (
     <View className="px-4 py-3 border-b border-surface-container-low">
@@ -52,18 +68,29 @@ function ReplyItem({
           />
         </Pressable>
         <View className="flex-1">
-          <View className="flex-row items-center gap-1.5 flex-wrap">
-            <Pressable onPress={() => onPressUser(reply)} className="active:opacity-70 shrink">
-              <Text className="text-[14px] font-semibold text-on-surface" numberOfLines={1}>
-                {displayName(reply)}
-              </Text>
+          <View className="flex-row items-start justify-between">
+            <View className="flex-row items-center gap-1.5 flex-wrap flex-1 pr-2">
+              <Pressable onPress={() => onPressUser(reply)} className="active:opacity-70 shrink">
+                <Text className="text-[14px] font-semibold text-on-surface" numberOfLines={1}>
+                  {displayName(reply)}
+                </Text>
+              </Pressable>
+              {!!reply.username && (
+                <Text className="text-[13px] text-outline" numberOfLines={1}>
+                  @{reply.username}
+                </Text>
+              )}
+              <Text className="text-[13px] text-outline">· {relativeTime}</Text>
+            </View>
+            <Pressable
+              className="-mr-1 -mt-1 p-1 active:opacity-50"
+              onPress={(event) => {
+                event.stopPropagation();
+                setIsMenuOpen(true);
+              }}
+            >
+              <Ellipsis size={20} color="#727687" />
             </Pressable>
-            {!!reply.username && (
-              <Text className="text-[13px] text-outline" numberOfLines={1}>
-                @{reply.username}
-              </Text>
-            )}
-            <Text className="text-[13px] text-outline">· {relativeTime}</Text>
           </View>
           <MentionText
             content={reply.content}
@@ -72,6 +99,39 @@ function ReplyItem({
           />
         </View>
       </View>
+
+      <Modal
+        visible={isMenuOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsMenuOpen(false)}
+      >
+        <Pressable className="flex-1 bg-black/40 justify-end" onPress={() => setIsMenuOpen(false)}>
+          <View className="bg-surface rounded-t-3xl p-5 border-t border-surface-container-high">
+            <Pressable
+              className="flex-row items-center gap-3 px-2 py-3 active:opacity-70"
+              onPress={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+            >
+              <Trash2 size={20} color="#ba1a1a" />
+              <Text className="text-base font-semibold text-error">
+                {deleteMutation.isPending ? "Deleting..." : "Delete reply"}
+              </Text>
+            </Pressable>
+            <Pressable
+              className="mt-2 py-3 rounded-full bg-surface-container-high items-center"
+              onPress={() => setIsMenuOpen(false)}
+            >
+              <Text className="font-semibold text-on-surface">Cancel</Text>
+            </Pressable>
+            {deleteMutation.isError && (
+              <Text className="text-xs text-red-600 mt-2 text-center">
+                Failed to delete reply. Please try again.
+              </Text>
+            )}
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -88,6 +148,17 @@ export default function CommentThreadScreen() {
   const [nextCursor, setNextCursor] = useState<number>(focalComment?.next_child_cursor || 0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [isFocalMenuOpen, setIsFocalMenuOpen] = useState(false);
+
+  const deleteFocalMutation = useMutation({
+    mutationFn: async () => {
+      await deleteComment(numericPostId, commentId);
+    },
+    onSuccess: () => {
+      setIsFocalMenuOpen(false);
+      router.back();
+    },
+  });
 
   const focalName = focalComment ? displayName(focalComment) : "this comment";
 
@@ -172,34 +243,51 @@ export default function CommentThreadScreen() {
           data={replies}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={{ paddingBottom: 24 }}
-          renderItem={({ item }) => <ReplyItem reply={item} onPressUser={openUserProfile} />}
+          renderItem={({ item }) => (
+            <ReplyItem
+              reply={item}
+              postId={numericPostId}
+              onPressUser={openUserProfile}
+              onDeleteSuccess={(deletedCommentId) => {
+                setReplies((prev) => prev.filter((c) => c.id !== deletedCommentId));
+              }}
+            />
+          )}
           ListHeaderComponent={
             <View className="px-4 pt-4 pb-3 border-b border-surface-container-high">
               {focalComment ? (
                 <>
-                  <View className="flex-row items-center gap-3">
-                    <Pressable onPress={() => openUserProfile(focalComment)} className="active:opacity-70">
-                      <Image
-                        source={{
-                          uri:
-                            focalComment.profile_picture ||
-                            getFallbackAvatarUrl(focalComment.public_id || String(focalComment.id)),
-                        }}
-                        className="w-11 h-11 rounded-full bg-surface-container-high"
-                      />
-                    </Pressable>
-                    <View className="flex-1">
-                      <Pressable onPress={() => openUserProfile(focalComment)} className="active:opacity-70 self-start">
-                        <Text className="text-[15px] font-bold text-on-surface" numberOfLines={1}>
-                          {focalName}
-                        </Text>
+                  <View className="flex-row items-start justify-between">
+                    <View className="flex-row items-center gap-3 flex-1 pr-2">
+                      <Pressable onPress={() => openUserProfile(focalComment)} className="active:opacity-70">
+                        <Image
+                          source={{
+                            uri:
+                              focalComment.profile_picture ||
+                              getFallbackAvatarUrl(focalComment.public_id || String(focalComment.id)),
+                          }}
+                          className="w-11 h-11 rounded-full bg-surface-container-high"
+                        />
                       </Pressable>
-                      {!!focalComment.username && (
-                        <Text className="text-[13px] text-outline" numberOfLines={1}>
-                          @{focalComment.username}
-                        </Text>
-                      )}
+                      <View className="flex-1">
+                        <Pressable onPress={() => openUserProfile(focalComment)} className="active:opacity-70 self-start">
+                          <Text className="text-[15px] font-bold text-on-surface" numberOfLines={1}>
+                            {focalName}
+                          </Text>
+                        </Pressable>
+                        {!!focalComment.username && (
+                          <Text className="text-[13px] text-outline" numberOfLines={1}>
+                            @{focalComment.username}
+                          </Text>
+                        )}
+                      </View>
                     </View>
+                    <Pressable
+                      className="-mr-1 -mt-1 p-1 active:opacity-50"
+                      onPress={() => setIsFocalMenuOpen(true)}
+                    >
+                      <Ellipsis size={20} color="#727687" />
+                    </Pressable>
                   </View>
 
                   <MentionText
@@ -252,6 +340,39 @@ export default function CommentThreadScreen() {
           onPosted={handlePosted}
         />
         <TransientSnackbar visible={showToast} message="Reply posted" />
+        
+        <Modal
+          visible={isFocalMenuOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setIsFocalMenuOpen(false)}
+        >
+          <Pressable className="flex-1 bg-black/40 justify-end" onPress={() => setIsFocalMenuOpen(false)}>
+            <View className="bg-surface rounded-t-3xl p-5 border-t border-surface-container-high">
+              <Pressable
+                className="flex-row items-center gap-3 px-2 py-3 active:opacity-70"
+                onPress={() => deleteFocalMutation.mutate()}
+                disabled={deleteFocalMutation.isPending}
+              >
+                <Trash2 size={20} color="#ba1a1a" />
+                <Text className="text-base font-semibold text-error">
+                  {deleteFocalMutation.isPending ? "Deleting..." : "Delete comment"}
+                </Text>
+              </Pressable>
+              <Pressable
+                className="mt-2 py-3 rounded-full bg-surface-container-high items-center"
+                onPress={() => setIsFocalMenuOpen(false)}
+              >
+                <Text className="font-semibold text-on-surface">Cancel</Text>
+              </Pressable>
+              {deleteFocalMutation.isError && (
+                <Text className="text-xs text-red-600 mt-2 text-center">
+                  Failed to delete comment. Please try again.
+                </Text>
+              )}
+            </View>
+          </Pressable>
+        </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

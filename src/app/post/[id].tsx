@@ -242,8 +242,13 @@ export default function PostDetailsScreen() {
             renderItem={({ item }) => (
               <CommentRow
                 comment={item}
+                postId={postId}
                 onPress={() => openThread(item)}
                 onPressUser={openCommentUserProfile}
+                onDeleteSuccess={(deletedCommentId) => {
+                  setParentComments((prev) => prev.filter((c) => c.id !== deletedCommentId));
+                  setLocalCommentDelta((prev) => prev - 1);
+                }}
               />
             )}
             ListHeaderComponent={

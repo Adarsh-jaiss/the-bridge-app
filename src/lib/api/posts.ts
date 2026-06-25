@@ -262,6 +262,12 @@ export async function deletePost(postId: number): Promise<void> {
   });
 }
 
+export async function deleteComment(postId: number, commentId: number): Promise<void> {
+  await apiFetch<ApiResponse<unknown>>(`/v1/posts/${postId}/comment/${commentId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function addComment(postId: number, payload: AddCommentPayload): Promise<void> {
   await apiFetch<ApiResponse<unknown>>(`/v1/posts/${postId}/comment`, {
     method: "POST",

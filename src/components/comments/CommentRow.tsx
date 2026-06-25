@@ -1,9 +1,10 @@
+import { useMutation } from "@tanstack/react-query";
 import { Image } from "expo-image";
-import { MessageCircle } from "lucide-react-native";
+import { Ellipsis, MessageCircle, Trash2 } from "lucide-react-native";
 import { cssInterop } from "nativewind";
-import React from "react";
-import { Pressable, Text, View } from "react-native";
-import { PostComment } from "../../lib/api/posts";
+import React, { useState } from "react";
+import { Modal, Pressable, Text, View } from "react-native";
+import { PostComment, deleteComment } from "../../lib/api/posts";
 import { getFallbackAvatarUrl } from "../../lib/avatar-fallback";
 import { MentionText } from "../common/MentionText";
 
@@ -24,17 +25,32 @@ function formatDate(dateString: string) {
 
 export function CommentRow({
   comment,
+  postId,
   onPress,
   onPressUser,
+  onDeleteSuccess,
 }: {
   comment: PostComment;
+  postId: number;
   onPress: () => void;
   onPressUser: (comment: PostComment) => void;
+  onDeleteSuccess?: (commentId: number) => void;
 }) {
   const name = `${comment.first_name || ""} ${comment.last_name || ""}`.trim() || "User";
   const fallbackAvatar = getFallbackAvatarUrl(comment.public_id || String(comment.id));
   const replyCount = comment.child_comments?.length || 0;
   const hasMore = (comment.next_child_cursor || 0) > 0;
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await deleteComment(postId, comment.id);
+    },
+    onSuccess: () => {
+      setIsMenuOpen(false);
+      onDeleteSuccess?.(comment.id);
+    },
+  });
 
   return (
     <Pressable
@@ -55,24 +71,35 @@ export function CommentRow({
           />
         </Pressable>
         <View className="flex-1">
-          <View className="flex-row items-center gap-1.5 flex-wrap">
+          <View className="flex-row items-start justify-between">
+            <View className="flex-row items-center gap-1.5 flex-wrap flex-1 pr-2">
+              <Pressable
+                onPress={(event) => {
+                  event.stopPropagation();
+                  onPressUser(comment);
+                }}
+                className="active:opacity-70 shrink"
+              >
+                <Text className="text-[14px] font-semibold text-on-surface" numberOfLines={1}>
+                  {name}
+                </Text>
+              </Pressable>
+              {!!comment.username && (
+                <Text className="text-[13px] text-outline" numberOfLines={1}>
+                  @{comment.username}
+                </Text>
+              )}
+              <Text className="text-[13px] text-outline">· {formatDate(comment.created_at)}</Text>
+            </View>
             <Pressable
+              className="-mr-1 -mt-1 p-1 active:opacity-50"
               onPress={(event) => {
                 event.stopPropagation();
-                onPressUser(comment);
+                setIsMenuOpen(true);
               }}
-              className="active:opacity-70 shrink"
             >
-              <Text className="text-[14px] font-semibold text-on-surface" numberOfLines={1}>
-                {name}
-              </Text>
+              <Ellipsis size={20} color={MUTED_COLOR} />
             </Pressable>
-            {!!comment.username && (
-              <Text className="text-[13px] text-outline" numberOfLines={1}>
-                @{comment.username}
-              </Text>
-            )}
-            <Text className="text-[13px] text-outline">· {formatDate(comment.created_at)}</Text>
           </View>
           <MentionText
             content={comment.content}
@@ -89,6 +116,39 @@ export function CommentRow({
           </View>
         </View>
       </View>
+
+      <Modal
+        visible={isMenuOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsMenuOpen(false)}
+      >
+        <Pressable className="flex-1 bg-black/40 justify-end" onPress={() => setIsMenuOpen(false)}>
+          <View className="bg-surface rounded-t-3xl p-5 border-t border-surface-container-high">
+            <Pressable
+              className="flex-row items-center gap-3 px-2 py-3 active:opacity-70"
+              onPress={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+            >
+              <Trash2 size={20} color="#ba1a1a" />
+              <Text className="text-base font-semibold text-error">
+                {deleteMutation.isPending ? "Deleting..." : "Delete comment"}
+              </Text>
+            </Pressable>
+            <Pressable
+              className="mt-2 py-3 rounded-full bg-surface-container-high items-center"
+              onPress={() => setIsMenuOpen(false)}
+            >
+              <Text className="font-semibold text-on-surface">Cancel</Text>
+            </Pressable>
+            {deleteMutation.isError && (
+              <Text className="text-xs text-red-600 mt-2 text-center">
+                Failed to delete comment. Please try again.
+              </Text>
+            )}
+          </View>
+        </Pressable>
+      </Modal>
     </Pressable>
   );
 }
