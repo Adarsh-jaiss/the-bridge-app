@@ -34,7 +34,10 @@ export function TopBar() {
               </View>
             )}
           </Pressable>
-          <Pressable className="p-2 rounded-full active:bg-surface-container-low transition-colors">
+          <Pressable
+            className="p-2 rounded-full active:bg-surface-container-low transition-colors"
+            onPress={() => router.push("/chat" as any)}
+          >
             <MaterialIcons name="send" size={24} color="#0050cb" className="" />
           </Pressable>
         </View>

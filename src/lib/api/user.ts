@@ -23,6 +23,7 @@ export interface UserProfilePost {
 }
 
 export interface UserProfileData {
+  id: number;
   bio: string;
   company_name?: string;
   firstName: string;

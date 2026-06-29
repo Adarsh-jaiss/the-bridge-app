@@ -2,8 +2,12 @@ import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 import { QueryClient } from "@tanstack/react-query";
 
-// const BASE_URL = "http://10.106.151.78:8080/api";
-const BASE_URL = ""
+export const BASE_URL = "http://10.106.151.78:8080/api";
+// const BASE_URL = "http://192.168.2.197:8080/api"
+
+// WebSocket base URL derived from BASE_URL so the REST and WS endpoints always
+// point at the same host/port (http -> ws, https -> wss).
+export const WS_BASE_URL = BASE_URL.replace(/^http/i, "ws");
 export const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
